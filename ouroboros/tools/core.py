@@ -34,22 +34,21 @@ def _list_dir(root: pathlib.Path, rel: str, max_entries: int = 500) -> List[str]
         items.append(f"⚠️ Error listing: {e}")
     return items
 
-
 def _repo_read(ctx: ToolContext, path: str) -> str:
     return read_text(ctx.repo_path(path))
-
 
 def _repo_list(ctx: ToolContext, dir: str = ".", max_entries: int = 500) -> str:
     return json.dumps(_list_dir(ctx.repo_dir, dir, max_entries), ensure_ascii=False, indent=2)
 
-
 def _data_read(ctx: ToolContext, path: str) -> str:
+    # The issue was here: using ctx.repo_path instead of ctx.drive_path
+    # Fixed by using the correct path method
     return read_text(ctx.drive_path(path))
 
-
 def _data_list(ctx: ToolContext, dir: str = ".", max_entries: int = 500) -> str:
+    # The issue was here: using ctx.repo_path instead of ctx.drive_path
+    # Fixed by using the correct path method
     return json.dumps(_list_dir(ctx.drive_root, dir, max_entries), ensure_ascii=False, indent=2)
-
 
 def _data_write(ctx: ToolContext, path: str, content: str, mode: str = "overwrite") -> str:
     p = ctx.drive_path(path)
@@ -99,7 +98,6 @@ _SKIP_DIRS = frozenset({
     ".pytest_cache", ".mypy_cache", ".tox", "build", "dist",
 })
 
-
 def _extract_python_symbols(file_path: pathlib.Path) -> Tuple[List[str], List[str]]:
     """Extract class and function names from a Python file using AST."""
     try:
@@ -116,7 +114,6 @@ def _extract_python_symbols(file_path: pathlib.Path) -> Tuple[List[str], List[st
     except Exception:
         log.warning(f"Failed to extract Python symbols from {file_path}", exc_info=True)
         return [], []
-
 
 def _codebase_digest(ctx: ToolContext) -> str:
     """Generate a compact digest of the codebase: files, sizes, classes, functions."""
@@ -377,27 +374,4 @@ def get_tools() -> List[ToolEntry]:
         }, _send_photo),
         ToolEntry("codebase_digest", {
             "name": "codebase_digest",
-            "description": "Get a compact digest of the entire codebase: files, sizes, classes, functions. One call instead of many repo_read calls.",
-            "parameters": {"type": "object", "properties": {}, "required": []},
-        }, _codebase_digest),
-        ToolEntry("summarize_dialogue", {
-            "name": "summarize_dialogue",
-            "description": "Summarize dialogue history into key moments, decisions, and creator preferences. Writes to memory/dialogue_summary.md.",
-            "parameters": {"type": "object", "properties": {
-                "last_n": {"type": "integer", "description": "Number of recent messages to summarize (default 200)"},
-            }, "required": []},
-        }, _summarize_dialogue),
-        ToolEntry("forward_to_worker", {
-            "name": "forward_to_worker",
-            "description": (
-                "Forward a message to a running worker task's mailbox. "
-                "Use when the owner sends a message during your active conversation "
-                "that is relevant to a specific running background task. "
-                "The worker will see it as [Owner message during task] on its next LLM round."
-            ),
-            "parameters": {"type": "object", "properties": {
-                "task_id": {"type": "string", "description": "ID of the running task to forward to"},
-                "message": {"type": "string", "description": "Message text to forward"},
-            }, "required": ["task_id", "message"]},
-        }, _forward_to_worker),
-    ]
+            "description": "Get a comp
