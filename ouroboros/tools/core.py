@@ -1,5 +1,3 @@
-"""File tools: repo_read, repo_list, data_read, data_list, data_write, codebase_digest, summarize_dialogue."""
-
 from __future__ import annotations
 
 import ast
@@ -78,7 +76,7 @@ def _send_photo(ctx: ToolContext, image_base64: str, caption: str = "") -> str:
         actual_b64 = ctx.browser_state.last_screenshot_b64
 
     if not actual_b64 or len(actual_b64) < 100:
-        return "⚠️ image_base64 is empty or too short. Take a screenshot first with browse_page(output='screenshot')."
+        return "⚠️ image_base64 is empty or too short. Take one first with browse_page(output='screenshot')."
 
     ctx.pending_events.append({
         "type": "send_photo",
@@ -286,9 +284,9 @@ Now write a comprehensive summary:"""
                 try:
                     ctx.event_queue.put_nowait(usage_event)
                 except Exception:
-                    if hasattr(ctx, "pending_events"):
+                    if hasattr(ctx, "pending_events") and ctx.pending_events is not None:
                         ctx.pending_events.append(usage_event)
-            elif hasattr(ctx, "pending_events"):
+            elif hasattr(ctx, "pending_events") and ctx.pending_events is not None:
                 ctx.pending_events.append(usage_event)
 
         summary = response.get("content", "")
@@ -369,9 +367,4 @@ def get_tools() -> List[ToolEntry]:
             ),
             "parameters": {"type": "object", "properties": {
                 "image_base64": {"type": "string", "description": "Base64-encoded PNG image data"},
-                "caption": {"type": "string", "description": "Optional caption for the photo"},
-            }, "required": ["image_base64"]},
-        }, _send_photo),
-        ToolEntry("codebase_digest", {
-            "name": "codebase_digest",
-            "description": "Get a comp
+                "caption": {"type": "string", "descripti
