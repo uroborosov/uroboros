@@ -1,9 +1,7 @@
-__pycache__/
+venv/
+analysis_env/
 *.pyc
-*.pyo
-*.so
-*.dylib
-*.dll
-*.dist-info/
-base_library.zip
+__pycache__/
+*.log
 .DS_Store
+.env
