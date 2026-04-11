@@ -11,21 +11,26 @@ site_data = {}     # {"Площадка": {"total_employees": 0, "total_output":
 # Чтение и обработка CSV файла
 try:
     with open(file_path, 'r', encoding='iso-8859-1') as file:
-        reader = csv.DictReader(file, delimiter=';')
+        reader = csv.reader(file, delimiter=';')
+        headers = next(reader)  # Пропускаем заголовок
         
         for row in reader:
-            # Извлечение данных из строки
-            uuid = row['UUID']
-            site = row['Площадка']
-            norm = float(row['Норматив, шт'].replace(',', '.'))
-            output = int(row['Кол-во операций'])
-            efficiency_str = row['Выработка, %'].replace(',', '.')
+            # Извлечение данных из строки по индексам
+            # Предполагаем, что последний столбец - UUID
+            # и что "Площадка" - это второй столбец (индекс 1)
+            if len(row) < 15:
+                continue  # Пропускаем некорректные строки
+                
+            site = row[1].strip()  # Второй столбец - "Площадка"
+            uuid = row[-1].strip()  # Последний столбец - UUID
             
-            # Некоторые значения выработки пустые, пропускаем их для агрегации по сотруднику
-            if efficiency_str.strip() == '' or efficiency_str == '-':
-                efficiency = 0.0
-            else:
-                efficiency = float(efficiency_str)
+            try:
+                norm = float(row[7].replace(',', '.')) if row[7] else 0.0  # Норматив, шт
+                output = int(row[9]) if row[9] else 0  # Кол-во операций
+            except (ValueError, IndexError):
+                continue  # Пропускаем строки с некорректными данными
+            
+            # Некоторые значения выработки могут быть пустыми, но мы их не используем для агрегации
             
             # Инициализация данных по сотруднику
             if uuid not in employee_data:
@@ -53,12 +58,14 @@ try:
 
     for uuid, data in employee_data.items():
         # Поиск соответствующей площадки для сотрудника (берем первую попавшуюся строку для этого UUID)
+        # Для этого нам нужно снова прочитать файл
         site = None
         with open(file_path, 'r', encoding='iso-8859-1') as file:
-            reader = csv.DictReader(file, delimiter=';')
+            reader = csv.reader(file, delimiter=';')
+            headers = next(reader)  # Пропускаем заголовок
             for row in reader:
-                if row['UUID'] == uuid:
-                    site = row['Площадка']
+                if len(row) >= 15 and row[-1].strip() == uuid:
+                    site = row[1].strip()
                     break
         
         if site is None:
